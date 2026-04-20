@@ -6,12 +6,12 @@ export async function getPublicCategories(req, res) {
     const categories = await Category.find();
     
     if (!categories) {
-      return res.status(404).json({ message: 'No hay categorías disponibles' })
+      return res.status(404).json({ message: 'No hay Categories disponibles' })
     }
     
     res.json(categories)
   } catch (err) {
-    res.status(500).json({ message: 'Error al obtener categorías', error: err.message })
+    res.status(500).json({ message: 'Error al obtener Categories', error: err.message })
   }
 }
 
@@ -21,7 +21,7 @@ export async function getCategories(req, res) {
     const categories = await Category.find()
     res.json(categories)
   } catch (err) {
-    res.status(500).json({ message: 'Error al obtener categorías', error: err.message })
+    res.status(500).json({ message: 'Error al obtener Categories', error: err.message })
   }
 }
 
