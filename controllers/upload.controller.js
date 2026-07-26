@@ -12,8 +12,8 @@ const s3 = new S3Client({
 })
 
 /**
- * Uploads a file to S3 and returns the public URL via the presigner service.
- * The bucket stays private; the presigner service redirects to presigned URLs.
+ * Uploads a file to S3 and returns a presigned URL via the s3-public-presigner service.
+ * The bucket stays private; the presigner service redirects to presigned URLs with expiration.
  * STORAGE_PUBLIC_URL = base URL of the deployed s3-public-presigner service.
  */
 async function uploadToS3(file) {
@@ -26,8 +26,11 @@ async function uploadToS3(file) {
     ContentType: file.mimetype,
   }))
 
-  // Public URL — works with either the presigner service or a public bucket
-  const baseUrl = (process.env.STORAGE_PUBLIC_URL || `${process.env.AWS_ENDPOINT_URL}/${process.env.AWS_S3_BUCKET_NAME}`).replace(/\/$/, '')
+  // Presigned URL — always use the presigner service for security
+  const baseUrl = (process.env.STORAGE_PUBLIC_URL || '').replace(/\/$/, '')
+  if (!baseUrl) {
+    throw new Error('STORAGE_PUBLIC_URL environment variable is not set')
+  }
   return `${baseUrl}/${key}`
 }
 
@@ -54,3 +57,4 @@ export async function uploadGallery(req, res) {
     res.status(500).json({ message: err.message || 'Upload failed' })
   }
 }
+
