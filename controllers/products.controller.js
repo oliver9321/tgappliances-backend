@@ -1,4 +1,5 @@
 import Product from '../models/Product.js'
+import { formatProductImages, formatProductsImages } from '../utils/imageUrl.js'
 
 // Public — supports ?active=true query param
 export async function getPublicProducts(req, res) {
@@ -6,7 +7,7 @@ export async function getPublicProducts(req, res) {
     const query = {}
     if (req.query.active === 'true') query.active = true
     const products = await Product.find(query)
-    res.json(products)
+    res.json(formatProductsImages(products))
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener productos', error: err.message })
   }
@@ -15,7 +16,7 @@ export async function getPublicProducts(req, res) {
 export async function getProducts(req, res) {
   try {
     const products = await Product.find()
-    res.json(products)
+    res.json(formatProductsImages(products))
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener productos', error: err.message })
   }
@@ -31,7 +32,7 @@ export async function getProductsByCategory(req, res) {
     }
 
     const products = await Product.find(query).sort({ category: 1, priority: -1 })
-    res.json(products)
+    res.json(formatProductsImages(products))
   } catch (err) {
     res.status(500).json({ message: 'Error al obtener productos', error: err.message })
   }
@@ -54,7 +55,7 @@ export async function createProduct(req, res) {
     })
 
     const saved = await product.save()
-    res.status(201).json(saved)
+    res.status(201).json(formatProductImages(saved))
   } catch (err) {
     res.status(500).json({ message: 'Error al crear producto', error: err.message })
   }
@@ -64,7 +65,7 @@ export async function getProductById(req, res) {
   try {
     const product = await Product.findById(req.params.id)
     if (!product) return res.status(404).json({ message: 'Producto no encontrado' })
-    res.json(product)
+    res.json(formatProductImages(product))
   } catch (err) {
     if (err.name === 'CastError') {
       return res.status(400).json({ message: 'ID de producto inválido' })
@@ -87,7 +88,7 @@ export async function updateProduct(req, res) {
       return res.status(404).json({ message: 'Producto no encontrado' })
     }
 
-    res.json(updated)
+    res.json(formatProductImages(updated))
   } catch (err) {
     res.status(500).json({ message: 'Error al actualizar producto', error: err.message })
   }
