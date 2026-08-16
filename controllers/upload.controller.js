@@ -19,10 +19,9 @@ const s3 = new S3Client({
 })
 
 /**
- * Uploads a file to S3 and returns the public URL via the presigner service.
- * The bucket stays private; the presigner service redirects to presigned URLs.
- * STORAGE_PUBLIC_URL = base URL of the deployed s3-public-presigner service
- * (https://s3-public-presigner-production-8d2e.up.railway.app).
+ * Uploads a file to S3 and returns a presigned URL via the s3-public-presigner service.
+ * The bucket stays private; the presigner service redirects to presigned URLs with expiration.
+ * STORAGE_PUBLIC_URL = base URL of the deployed s3-public-presigner service.
  */
 async function uploadToS3(file) {
   const key = `products/${file.originalname}`
@@ -34,8 +33,12 @@ async function uploadToS3(file) {
     ContentType: file.mimetype,
   }))
 
-  // Always route through the presigner service so the bucket can stay private.
-  return toPresignedUrl(key)
+  // Presigned URL — always use the presigner service for security
+  const baseUrl = (process.env.STORAGE_PUBLIC_URL || '').replace(/\/$/, '')
+  if (!baseUrl) {
+    throw new Error('STORAGE_PUBLIC_URL environment variable is not set')
+  }
+  return `${baseUrl}/${key}`
 }
 
 export async function uploadImage(req, res) {
@@ -61,3 +64,4 @@ export async function uploadGallery(req, res) {
     res.status(500).json({ message: err.message || 'Upload failed' })
   }
 }
+
