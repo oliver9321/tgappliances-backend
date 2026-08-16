@@ -1,9 +1,16 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { v4 as uuidv4 } from 'uuid'
+import { toPresignedUrl } from '../utils/imageUrl.js'
+
+// Defaults match the new bucket (tgappliances-images-n6tnzl) hosted at
+// https://t3.storageapi.dev. AWS_DEFAULT_REGION / AWS_ENDPOINT_URL env vars
+// can still override these for other environments.
+const DEFAULT_REGION = 'auto'
+const DEFAULT_ENDPOINT = 'https://t3.storageapi.dev'
 
 const s3 = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION,
-  endpoint: process.env.AWS_ENDPOINT_URL,
+  region: process.env.AWS_DEFAULT_REGION || DEFAULT_REGION,
+  endpoint: process.env.AWS_ENDPOINT_URL || DEFAULT_ENDPOINT,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
