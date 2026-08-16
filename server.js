@@ -12,6 +12,7 @@ import categoriesRoutes from './routes/categories.routes.js'
 import productsRoutes from './routes/products.routes.js'
 import usersRoutes from './routes/users.routes.js'
 import uploadRoutes from './routes/upload.routes.js'
+import imagesRoutes from './routes/images.routes.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.join(__dirname, '../dist')
@@ -31,6 +32,7 @@ app.use('/api/v1/categories', categoriesRoutes)
 app.use('/api/v1/products', productsRoutes)
 app.use('/api/v1/users', usersRoutes)
 app.use('/api/v1/upload', uploadRoutes)
+app.use('/api/v1/images', imagesRoutes)
 
 // Serve static build assets
 app.use(express.static(distDir))

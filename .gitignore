@@ -26,3 +26,6 @@ backend/.env
 *.njsproj
 *.sln
 *.sw?
+
+# Migration backups (may contain production data)
+scripts/backups/

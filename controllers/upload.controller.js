@@ -1,44 +1,28 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
-import { v4 as uuidv4 } from 'uuid'
-import { toPresignedUrl } from '../utils/imageUrl.js'
-
-// Defaults match the new bucket (tgappliances-images-n6tnzl) hosted at
-// https://t3.storageapi.dev. AWS_DEFAULT_REGION / AWS_ENDPOINT_URL env vars
-// can still override these for other environments.
-const DEFAULT_REGION = 'auto'
-const DEFAULT_ENDPOINT = 'https://t3.storageapi.dev'
-
-const s3 = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION || DEFAULT_REGION,
-  endpoint: process.env.AWS_ENDPOINT_URL || DEFAULT_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-  forcePathStyle: true,
-})
+import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { s3, BUCKET } from '../utils/s3Client.js'
+import { toStableImagePath, OBJECT_PREFIX } from '../utils/imageUrl.js'
 
 /**
- * Uploads a file to S3 and returns a presigned URL via the s3-public-presigner service.
- * The bucket stays private; the presigner service redirects to presigned URLs with expiration.
- * STORAGE_PUBLIC_URL = base URL of the deployed s3-public-presigner service.
+ * Uploads a file to the private bucket and returns a stable image path.
+ *
+ * The returned value (e.g. "/api/v1/images/products/IMG_7837.jpeg") is what gets
+ * stored on the product. It never expires; the images route signs it on demand.
  */
 async function uploadToS3(file) {
-  const key = `products/${file.originalname}`
+  if (!BUCKET) {
+    throw new Error('AWS_S3_BUCKET_NAME environment variable is not set')
+  }
+
+  const key = `${OBJECT_PREFIX}${file.originalname}`
 
   await s3.send(new PutObjectCommand({
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Bucket: BUCKET,
     Key: key,
-    Body: file.buffer, 
+    Body: file.buffer,
     ContentType: file.mimetype,
   }))
 
-  // Presigned URL — always use the presigner service for security
-  const baseUrl = (process.env.STORAGE_PUBLIC_URL || '').replace(/\/$/, '')
-  if (!baseUrl) {
-    throw new Error('STORAGE_PUBLIC_URL environment variable is not set')
-  }
-  return `${baseUrl}/${key}`
+  return toStableImagePath(key)
 }
 
 export async function uploadImage(req, res) {
@@ -64,4 +48,3 @@ export async function uploadGallery(req, res) {
     res.status(500).json({ message: err.message || 'Upload failed' })
   }
 }
-
