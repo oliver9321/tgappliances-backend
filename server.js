@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import compression from 'compression'
 import mongoose from 'mongoose'
 import swaggerUi from 'swagger-ui-express'
 import { swaggerSpec } from './swagger.js'
@@ -20,6 +21,7 @@ const distDir = path.join(__dirname, '../dist')
 const app = express()
 
 // Middleware
+app.use(compression()) // gzip/brotli JSON & HTML; images are already compressed
 app.use(cors())
 app.use(express.json())
 
@@ -34,8 +36,17 @@ app.use('/api/v1/users', usersRoutes)
 app.use('/api/v1/upload', uploadRoutes)
 app.use('/api/v1/images', imagesRoutes)
 
-// Serve static build assets
-app.use(express.static(distDir))
+// Serve static build assets. Vite emits hashed filenames under /assets, so
+// those can be cached forever; HTML must always be revalidated.
+app.use(express.static(distDir, {
+  setHeaders(res, filePath) {
+    if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+    } else if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache')
+    }
+  },
+}))
 
 // Frontend — root serves index.html
 app.get('/', (req, res) => {
